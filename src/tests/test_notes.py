@@ -21,6 +21,9 @@ def test_create_invalid_json(test_app):
     response = test_app.post("/notes/", data=json.dumps({"title": "testing"}))
     assert response.status_code == 422
 
+    response = test_app.post("/notes/", data=json.dumps({"title": "1", "description": "2"}))
+    assert response.status_code == 422
+
 
 def test_read_note(test_app, monkeypatch):
     test_data = {"id": 1, "title": "testing", "description": "It's just a test"}
@@ -46,6 +49,9 @@ def test_read_note_incorrect_id(test_app, monkeypatch):
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Note not found"
+
+    response = test_app.get("/notes/0")
+    assert response.status_code == 422
 
 
 def test_read_all_notes(test_app, monkeypatch):
@@ -88,7 +94,10 @@ def test_update_note(test_app, monkeypatch):
     [
         [1, {}, 422],
         [1, {"description": "bleh"}, 422],
-        [999, {"title": "blah", "description": "zork"}, 404]
+        [999, {"title": "blah", "description": "zork"}, 404],
+        [1, {"title": "1", "description": "zork"}, 422],
+        [1, {"title": "blah", "description": "2"}, 422],
+        [0, {"title": "blah", "description": "bleh"}, 422]
     ],)
 def test_update_note_invalid(test_app, monkeypatch, id, payload, status_code):
     async def mock_get(id):
@@ -127,3 +136,6 @@ def test_remove_note_incorrect_id(test_app, monkeypatch):
     response = test_app.delete("/notes/999/")
     assert response.status_code == 404
     assert response.json()["detail"] == "Note not found"
+
+    response = test_app.delete("/notes/0/")
+    assert response.status_code == 422
