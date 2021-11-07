@@ -1,24 +1,25 @@
-FROM python:3.9-alpine
+FROM python:3.9-slim as builder
 
-WORKDIR /usr/src/app
+WORKDIR /usr/src
 
-# set environment variables
-# Prevents from save .pyc files
 ENV PYTHONDONTWRITEBYTECODE 1
-# Prevents from bufferin stdout and stderr
 ENV PYTHONUNBUFFERED 1
 
-COPY ./requirements.txt /usr/src/app/requirements.txt
+RUN apt-get update && apt-get install -y --no-install-recommends gcc
+
+COPY requirements.txt .
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir ./wheels -r requirements.txt
 
 
-# Installing dependencies to make python work on alpine
-RUN set -eux \
-    && apk add --no-cache --virtual .build-deps build-base \
-    libressl-dev libffi-dev gcc musl-dev python3-dev \
-    postgresql-dev bash \
-    && pip install --upgrade pip setuptools wheel \
-    && pip install -r /usr/src/app/requirements.txt \
-    && rm -rf /root/.cache/pip
+FROM python:3.9-slim
 
+# RUN addgroup --system app && adduser --system --group app
 
-COPY . /usr/src/app/
+# USER app
+
+WORKDIR /usr/src/app
+COPY --from=builder /usr/src/wheels ./wheels
+COPY --from=builder /usr/src/requirements.txt .
+
+RUN pip install --no-cache ./wheels/*
+

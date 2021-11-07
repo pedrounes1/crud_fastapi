@@ -1,6 +1,6 @@
 from typing import List
-from fastapi import APIRouter, HTTPException, Path
 
+from fastapi import APIRouter, HTTPException, Path
 
 from app.api import crud
 from app.api.models import NoteDB, NoteSchema
@@ -38,13 +38,13 @@ async def read_all_notes():
 async def update_note(payload: NoteSchema, id: int = Path(..., gt=0)):
     note = await crud.get(id)
     if not note:
-        raise HTTPException(status_code=404, detail='Note not found')
+        raise HTTPException(status_code=404, detail="Note not found")
     note_id = await crud.put(id, payload)
 
     response_object = {
         "id": note_id,
         "title": payload.title,
-        "description": payload.description
+        "description": payload.description,
     }
     return response_object
 
